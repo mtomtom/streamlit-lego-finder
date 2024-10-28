@@ -60,10 +60,10 @@ if uploaded_file is not None:
     # Construct the image key from the selected part number
     image_key = selected_index  # selected_index is now a string
 
-    # Check if the image file exists in the uploaded files
     if image_key in image_dict:
-        # Open the image using PIL
-        image = Image.open(image_dict[image_key])
+        # Directly read the uploaded file as an image
+        img_file = image_dict[image_key]
+        image = Image.open(img_file)  # Open the image directly from the uploaded file
         st.image(image, caption=f"LEGO Part Number: {image_key}")
     else:
         st.write(f"No image found for part number: {image_key}")
