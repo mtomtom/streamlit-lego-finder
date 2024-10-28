@@ -35,23 +35,17 @@ if st.session_state.lego is not None:
     def highlight_missing(row):
         return ['background-color: yellow' if row["PiecesPresent"] < row["Qty"] else '' for _ in row]
 
-    styled_lego = lego[["SetNumber", "ElementID", "Colour", "ElementName", "Qty", "PiecesPresent"]].style.apply(highlight_missing, axis=1)
-    st.write(styled_lego)
-
-    st.write(f"Total number of pieces: {lego['Qty'].sum()}")
-    st.write(f"Number of pieces present: {lego['PiecesPresent'].sum()}")
-
     # Make ElementID the index and convert to string for matching with image names
     lego["ElementID"] = lego["ElementID"].astype(str)  # Convert ElementID to string
     lego.set_index("ElementID", inplace=True)
-    
+
     # Create columns for input fields
     col1, col2, col3 = st.columns(3)
 
     with col1:
         selected_index = st.selectbox("Select a part number to edit", options=lego.index)
         selected_row = lego.loc[selected_index]
-    
+
     with col2:
         new_qty = st.number_input("Qty", value=int(selected_row["Qty"]), min_value=0, key="qty_input")
     
@@ -59,22 +53,25 @@ if st.session_state.lego is not None:
         new_pieces_present = st.number_input("PiecesPresent", value=int(selected_row["PiecesPresent"]), min_value=0, key="pieces_present_input")
 
     # Automatically save changes whenever a number input is updated
-    if st.session_state.lego is not None:
-        if new_qty != selected_row["Qty"] or new_pieces_present != selected_row["PiecesPresent"]:
-            # Update the DataFrame
-            lego.at[selected_index, "Qty"] = new_qty
-            lego.at[selected_index, "PiecesPresent"] = new_pieces_present
-            
-            # Save the updated DataFrame back to CSV
-            output_file_name = "updated_lego_data.csv"  # Change this to the desired name if needed
-            lego.to_csv(output_file_name, index=True)  # Save with index
-            
-            # Reload the DataFrame from the CSV
-            st.session_state.lego = pd.read_csv(output_file_name)
+    if new_qty != selected_row["Qty"] or new_pieces_present != selected_row["PiecesPresent"]:
+        # Update the DataFrame
+        lego.at[selected_index, "Qty"] = new_qty
+        lego.at[selected_index, "PiecesPresent"] = new_pieces_present
+        
+        # Save the updated DataFrame back to CSV
+        output_file_name = "updated_lego_data.csv"  # Change this to the desired name if needed
+        lego.to_csv(output_file_name, index=True)  # Save with index
 
-            # Display updated DataFrame
-            st.write("Changes saved!")
-            st.dataframe(lego.style.apply(highlight_missing, axis=1))
+        # Reload the DataFrame from the CSV
+        st.session_state.lego = pd.read_csv(output_file_name)
+
+        # Provide feedback on changes
+        st.success("Changes saved!")
+
+    # Display the updated DataFrame only
+    st.write("Updated DataFrame:")
+    styled_lego = lego.style.apply(highlight_missing, axis=1)
+    st.dataframe(styled_lego)
 
     # Construct the image key from the selected part number
     image_key = selected_index  # selected_index is now a string
@@ -89,6 +86,7 @@ if st.session_state.lego is not None:
 
     # Display the image file path for debugging
     st.write(f"Image Key: {image_key}")
+
 
 
 
