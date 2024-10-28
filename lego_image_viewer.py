@@ -6,7 +6,9 @@ from PIL import Image
 # Initialize session state for DataFrame and current index
 if 'lego' not in st.session_state:
     st.session_state.lego = None
+if 'current_index' not in st.session_state:
     st.session_state.current_index = 0
+if 'selected_index' not in st.session_state:
     st.session_state.selected_index = None
 
 st.title("LEGO Part Image Viewer")
@@ -30,6 +32,7 @@ if uploaded_file is not None:
     st.session_state.lego["ElementID"] = st.session_state.lego["ElementID"].astype(str)  # Convert ElementID to string
     st.session_state.lego.set_index("ElementID", inplace=True)
     st.session_state.current_index = 0  # Reset index when new file is uploaded
+    st.session_state.selected_index = st.session_state.lego.index[st.session_state.current_index]
 
 if st.session_state.lego is not None:
     lego = st.session_state.lego
@@ -39,9 +42,6 @@ if st.session_state.lego is not None:
         return ['background-color: yellow' if row["PiecesPresent"] < row["Qty"] else '' for _ in row]
 
     # Get the current index and selected row
-    if st.session_state.selected_index is None:
-        st.session_state.selected_index = lego.index[st.session_state.current_index]
-    
     selected_index = st.session_state.selected_index
     selected_row = lego.loc[selected_index]
 
@@ -113,6 +113,7 @@ if st.session_state.lego is not None:
 
     # Debugging information
     st.write(f"Image Key: {image_key}")
+
 
 
 
