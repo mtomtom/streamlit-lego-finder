@@ -3,6 +3,10 @@ import pandas as pd
 import os
 from PIL import Image
 
+# Initialize session state for the DataFrame if it doesn't exist
+if 'lego' not in st.session_state:
+    st.session_state.lego = None
+
 st.title("LEGO Part Image Viewer")
 
 # File uploader for CSV
@@ -21,13 +25,17 @@ if uploaded_images is not None:
 
 if uploaded_file is not None:
     # Read the CSV file
-    lego = pd.read_csv(uploaded_file)
+    st.session_state.lego = pd.read_csv(uploaded_file)
+
+if st.session_state.lego is not None:
+    # Use the DataFrame stored in session state
+    lego = st.session_state.lego
 
     # Display the DataFrame with highlighted missing pieces
     def highlight_missing(row):
         return ['background-color: yellow' if row["PiecesPresent"] < row["Qty"] else '' for _ in row]
 
-    styled_lego = lego[["SetNumber","ElementID","Colour","ElementName","Qty","PiecesPresent"]].style.apply(highlight_missing, axis=1)
+    styled_lego = lego[["SetNumber", "ElementID", "Colour", "ElementName", "Qty", "PiecesPresent"]].style.apply(highlight_missing, axis=1)
     st.write(styled_lego)
 
     st.write(f"Total number of pieces: {lego['Qty'].sum()}")
@@ -50,12 +58,29 @@ if uploaded_file is not None:
     with col3:
         new_pieces_present = st.number_input("PiecesPresent", value=int(selected_row["PiecesPresent"]), min_value=0)
 
-    # Button to save changes
+    # Button to save changes incrementally
     if st.button("Save Changes"):
         lego.at[selected_index, "Qty"] = new_qty
         lego.at[selected_index, "PiecesPresent"] = new_pieces_present
+        
+        # Update the DataFrame in session state
+        st.session_state.lego = lego.copy()  # Keep the updated DataFrame in session state
+
+        st.write("Changes saved!")
         st.write("Updated DataFrame:")
         st.dataframe(lego.style.apply(highlight_missing, axis=1))
+
+        # Save the updated DataFrame back to CSV
+        output_file_name = "updated_lego_data.csv"  # Change this to the desired name if needed
+        lego.to_csv(output_file_name, index=True)  # Save with index
+
+        # Provide a download link for the updated CSV file
+        st.download_button(
+            label="Download Updated CSV",
+            data=open(output_file_name, "rb").read(),
+            file_name=output_file_name,
+            mime="text/csv"
+        )
 
     # Construct the image key from the selected part number
     image_key = selected_index  # selected_index is now a string
@@ -69,6 +94,7 @@ if uploaded_file is not None:
         st.write(f"No image found for part number: {image_key}")
 
     # Display the image file path for debugging
-    st.write(f"Image Key: {image_key}")  # For debugging purposes
+    st.write(f"Image Key: {image_key}")  
+# For debugging purposes
 
 
