@@ -74,7 +74,7 @@ if st.session_state.lego is not None:
         st.success("Changes saved!")
 
     st.write("Updated DataFrame:")
-    styled_lego = lego.style.apply(highlight_missing, axis=1)
+    styled_lego = lego[["ElementName","Colour","Qty","PiecesPresent"]].style.apply(highlight_missing, axis=1)
     st.dataframe(styled_lego)
 
     # Construct the image key from the selected part number
