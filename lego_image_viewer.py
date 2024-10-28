@@ -37,6 +37,10 @@ if st.session_state.lego is not None:
     lego["ElementID"] = lego["ElementID"].astype(str)
     lego.set_index("ElementID", inplace=True)
 
+    # Display the total number of parts and the number found so far
+    st.write(f"Total number of parts: {lego["Qty"].sum()}")
+    st.write(f"Number of parts found: {lego["PiecesPresent"].sum()}")
+
     # Create columns for input fields
     col1, col2, col3 = st.columns(3)
 
