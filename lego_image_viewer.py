@@ -53,34 +53,28 @@ if st.session_state.lego is not None:
         selected_row = lego.loc[selected_index]
     
     with col2:
-        new_qty = st.number_input("Qty", value=int(selected_row["Qty"]), min_value=0)
+        new_qty = st.number_input("Qty", value=int(selected_row["Qty"]), min_value=0, key="qty_input")
     
     with col3:
-        new_pieces_present = st.number_input("PiecesPresent", value=int(selected_row["PiecesPresent"]), min_value=0)
+        new_pieces_present = st.number_input("PiecesPresent", value=int(selected_row["PiecesPresent"]), min_value=0, key="pieces_present_input")
 
-    # Button to save changes incrementally
-    if st.button("Save Changes"):
-        lego.at[selected_index, "Qty"] = new_qty
-        lego.at[selected_index, "PiecesPresent"] = new_pieces_present
-        
-        # Update the DataFrame in session state
-        st.session_state.lego = lego.copy()  # Keep the updated DataFrame in session state
+    # Automatically save changes whenever a number input is updated
+    if st.session_state.lego is not None:
+        if new_qty != selected_row["Qty"] or new_pieces_present != selected_row["PiecesPresent"]:
+            # Update the DataFrame
+            lego.at[selected_index, "Qty"] = new_qty
+            lego.at[selected_index, "PiecesPresent"] = new_pieces_present
+            
+            # Save the updated DataFrame back to CSV
+            output_file_name = "updated_lego_data.csv"  # Change this to the desired name if needed
+            lego.to_csv(output_file_name, index=True)  # Save with index
+            
+            # Reload the DataFrame from the CSV
+            st.session_state.lego = pd.read_csv(output_file_name)
 
-        st.write("Changes saved!")
-        st.write("Updated DataFrame:")
-        st.dataframe(lego.style.apply(highlight_missing, axis=1))
-
-        # Save the updated DataFrame back to CSV
-        output_file_name = "updated_lego_data.csv"  # Change this to the desired name if needed
-        lego.to_csv(output_file_name, index=True)  # Save with index
-
-        # Provide a download link for the updated CSV file
-        st.download_button(
-            label="Download Updated CSV",
-            data=open(output_file_name, "rb").read(),
-            file_name=output_file_name,
-            mime="text/csv"
-        )
+            # Display updated DataFrame
+            st.write("Changes saved!")
+            st.dataframe(lego.style.apply(highlight_missing, axis=1))
 
     # Construct the image key from the selected part number
     image_key = selected_index  # selected_index is now a string
@@ -94,7 +88,7 @@ if st.session_state.lego is not None:
         st.write(f"No image found for part number: {image_key}")
 
     # Display the image file path for debugging
-    st.write(f"Image Key: {image_key}")  
-# For debugging purposes
+    st.write(f"Image Key: {image_key}")
+
 
 
