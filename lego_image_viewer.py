@@ -15,14 +15,15 @@ uploaded_images = st.file_uploader("Upload Part Images", type=["jpg", "jpeg", "p
 image_dict = {}
 if uploaded_images is not None:
     for img_file in uploaded_images:
-        # Use the image filename as the key (or you could use another method)
-        image_dict[os.path.splitext(img_file.name)[0]] = img_file
+        # Use the image filename without extension as the key
+        image_key = os.path.splitext(img_file.name)[0]  # Get the filename without extension
+        image_dict[image_key] = img_file  # Store the uploaded file
 
 if uploaded_file is not None:
     # Read the CSV file
     lego = pd.read_csv(uploaded_file)
 
-    # Display the DataFrame
+    # Display the DataFrame with highlighted missing pieces
     def highlight_missing(row):
         return ['background-color: yellow' if row["PiecesPresent"] < row["Qty"] else '' for _ in row]
 
@@ -32,7 +33,8 @@ if uploaded_file is not None:
     st.write(f"Total number of pieces: {lego['Qty'].sum()}")
     st.write(f"Number of pieces present: {lego['PiecesPresent'].sum()}")
 
-    # Make ElementID the index
+    # Make ElementID the index and convert to string for matching with image names
+    lego["ElementID"] = lego["ElementID"].astype(str)  # Convert ElementID to string
     lego.set_index("ElementID", inplace=True)
     
     # Create columns for input fields
@@ -55,12 +57,18 @@ if uploaded_file is not None:
         st.write("Updated DataFrame:")
         st.dataframe(lego.style.apply(highlight_missing, axis=1))
 
-    # Display the image if it exists in the uploaded files
-    if selected_index in image_dict:
-        image = Image.open(image_dict[selected_index])
-        st.image(image, caption=f"LEGO Part Number: {selected_index}")
-    else:
-        st.write(f"No image found for part number: {selected_index}")
+    # Construct the image key from the selected part number
+    image_key = selected_index  # selected_index is now a string
 
-    st.write(f"Image Path: {selected_index}")  # For debugging
+    # Check if the image file exists in the uploaded files
+    if image_key in image_dict:
+        # Open the image using PIL
+        image = Image.open(image_dict[image_key])
+        st.image(image, caption=f"LEGO Part Number: {image_key}")
+    else:
+        st.write(f"No image found for part number: {image_key}")
+
+    # Display the image file path for debugging
+    st.write(f"Image Key: {image_key}")  # For debugging purposes
+
 
