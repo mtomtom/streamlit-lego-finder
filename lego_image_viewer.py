@@ -77,23 +77,22 @@ if st.session_state.lego is not None:
 
         st.success("Changes saved!")
 
-    # Update the index when buttons are pressed
-    next_clicked = st.button("Next Part")
-    prev_clicked = st.button("Previous Part")
-
-    if next_clicked:
-        st.session_state.current_index = (st.session_state.current_index + 1) % len(lego.index)
-        st.session_state.selected_index = lego.index[st.session_state.current_index]
-
-    if prev_clicked:
-        st.session_state.current_index = (st.session_state.current_index - 1) % len(lego.index)
-        st.session_state.selected_index = lego.index[st.session_state.current_index]
-
     # Dropdown to select a specific part number
     selected_index_from_dropdown = st.selectbox("Jump to Part Number:", options=lego.index, index=st.session_state.current_index)
     if selected_index_from_dropdown != selected_index:
         st.session_state.selected_index = selected_index_from_dropdown
         st.session_state.current_index = lego.index.get_loc(selected_index_from_dropdown)
+
+    # Buttons for navigation
+    col_next, col_prev = st.columns([1, 1])
+    with col_next:
+        if st.button("Next Part"):
+            st.session_state.current_index = (st.session_state.current_index + 1) % len(lego.index)
+            st.session_state.selected_index = lego.index[st.session_state.current_index]
+    with col_prev:
+        if st.button("Previous Part"):
+            st.session_state.current_index = (st.session_state.current_index - 1) % len(lego.index)
+            st.session_state.selected_index = lego.index[st.session_state.current_index]
 
     st.write("Updated DataFrame:")
     styled_lego = lego.style.apply(highlight_missing, axis=1)
@@ -112,6 +111,7 @@ if st.session_state.lego is not None:
 
     # Debugging information
     st.write(f"Image Key: {image_key}")
+
 
 
 
