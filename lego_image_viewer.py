@@ -3,9 +3,10 @@ import pandas as pd
 import os
 from PIL import Image
 
-# Initialize session state for DataFrame
+# Initialize session state for DataFrame and current index
 if 'lego' not in st.session_state:
     st.session_state.lego = None
+    st.session_state.current_index = 0
 
 st.title("LEGO Part Image Viewer")
 
@@ -16,7 +17,7 @@ uploaded_images = st.file_uploader("Upload Part Images", type=["jpg", "jpeg", "p
 
 # Store images in a dictionary
 image_dict = {}
-if uploaded_images is not None:
+if uploaded_images:
     for img_file in uploaded_images:
         # Use the image filename without extension as the key
         image_key = os.path.splitext(img_file.name)[0]
@@ -25,6 +26,7 @@ if uploaded_images is not None:
 # Read the uploaded CSV file and store it in session state
 if uploaded_file is not None:
     st.session_state.lego = pd.read_csv(uploaded_file)
+    st.session_state.current_index = 0  # Reset index when new file is uploaded
 
 if st.session_state.lego is not None:
     lego = st.session_state.lego
@@ -37,18 +39,22 @@ if st.session_state.lego is not None:
     lego["ElementID"] = lego["ElementID"].astype(str)
     lego.set_index("ElementID", inplace=True)
 
+    # Get the current index and selected row
+    current_index = st.session_state.current_index
+    selected_index = lego.index[current_index]
+    selected_row = lego.loc[selected_index]
+
     # Create columns for input fields
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        selected_index = st.selectbox("Select a part number to edit", options=lego.index)
-        selected_row = lego.loc[selected_index]
-    
+        st.write(f"Editing part number: {selected_index}")
+
     with col2:
-        new_qty = st.number_input("Qty", value=int(selected_row["Qty"]), min_value=0)
-    
+        new_qty = st.number_input("Qty", value=int(selected_row["Qty"]), min_value=0, key='qty_input')
+
     with col3:
-        new_pieces_present = st.number_input("PiecesPresent", value=int(selected_row["PiecesPresent"]), min_value=0)
+        new_pieces_present = st.number_input("PiecesPresent", value=int(selected_row["PiecesPresent"]), min_value=0, key='pieces_present_input')
 
     # Button to save changes
     if st.button("Save Changes"):
@@ -60,9 +66,6 @@ if st.session_state.lego is not None:
         output_file_name = "updated_lego_data.csv"
         lego.to_csv(output_file_name, index=True)
 
-        # Reload the DataFrame from the CSV
-        st.session_state.lego = pd.read_csv(output_file_name)
-
         # Provide the updated CSV for download
         st.download_button(
             label="Download Updated Data",
@@ -73,8 +76,21 @@ if st.session_state.lego is not None:
 
         st.success("Changes saved!")
 
+    # Button to move to the next part
+    if st.button("Next Part"):
+        st.session_state.current_index = (st.session_state.current_index + 1) % len(lego.index)
+
+    # Button to move to the previous part
+    if st.button("Previous Part"):
+        st.session_state.current_index = (st.session_state.current_index - 1) % len(lego.index)
+
+    # Dropdown to select a specific part number
+    selected_index_from_dropdown = st.selectbox("Jump to Part Number:", options=lego.index, index=current_index)
+    if selected_index_from_dropdown != selected_index:
+        st.session_state.current_index = lego.index.get_loc(selected_index_from_dropdown)
+
     st.write("Updated DataFrame:")
-    styled_lego = lego[["ElementName","Colour","Qty","PiecesPresent"]].style.apply(highlight_missing, axis=1)
+    styled_lego = lego.style.apply(highlight_missing, axis=1)
     st.dataframe(styled_lego)
 
     # Construct the image key from the selected part number
