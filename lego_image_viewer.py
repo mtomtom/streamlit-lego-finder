@@ -90,10 +90,12 @@ if st.session_state.lego is not None:
             if st.button("Next Part"):
                 st.session_state.current_index = (st.session_state.current_index + 1) % len(lego.index)
                 st.session_state.selected_index = lego.index[st.session_state.current_index]
+                st.experimental_rerun()  # Force a re-render
         with col_prev:
             if st.button("Previous Part"):
                 st.session_state.current_index = (st.session_state.current_index - 1) % len(lego.index)
                 st.session_state.selected_index = lego.index[st.session_state.current_index]
+                st.experimental_rerun()  # Force a re-render
 
         st.write("Updated DataFrame:")
         styled_lego = lego.style.apply(highlight_missing, axis=1)
@@ -109,17 +111,3 @@ if st.session_state.lego is not None:
             st.image(image, caption=f"LEGO Part Number: {image_key}")
         else:
             st.write(f"No image found for part number: {image_key}")
-
-        # Debugging information
-        st.write(f"Image Key: {image_key}")
-    else:
-        st.write("No part selected.")
-
-
-
-
-
-
-
-
-
