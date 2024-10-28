@@ -17,7 +17,7 @@ uploaded_images = st.file_uploader("Upload Part Images", type=["jpg", "jpeg", "p
 
 # Store images in a dictionary
 image_dict = {}
-if uploaded_images is not None:
+if uploaded_images:
     for img_file in uploaded_images:
         # Use the image filename without extension as the key
         image_key = os.path.splitext(img_file.name)[0]
@@ -51,10 +51,10 @@ if st.session_state.lego is not None:
         st.write(f"Editing part number: {selected_index}")
 
     with col2:
-        new_qty = st.number_input("Qty", value=int(selected_row["Qty"]), min_value=0)
+        new_qty = st.number_input("Qty", value=int(selected_row["Qty"]), min_value=0, key='qty_input')
 
     with col3:
-        new_pieces_present = st.number_input("PiecesPresent", value=int(selected_row["PiecesPresent"]), min_value=0)
+        new_pieces_present = st.number_input("PiecesPresent", value=int(selected_row["PiecesPresent"]), min_value=0, key='pieces_present_input')
 
     # Button to save changes
     if st.button("Save Changes"):
@@ -65,11 +65,6 @@ if st.session_state.lego is not None:
         # Save the updated DataFrame to CSV
         output_file_name = "updated_lego_data.csv"
         lego.to_csv(output_file_name, index=True)
-
-        # Reload the DataFrame from the CSV
-        st.session_state.lego = pd.read_csv(output_file_name)
-        st.session_state.lego["ElementID"] = st.session_state.lego["ElementID"].astype(str)
-        st.session_state.lego.set_index("ElementID", inplace=True)
 
         # Provide the updated CSV for download
         st.download_button(
@@ -84,7 +79,6 @@ if st.session_state.lego is not None:
     # Button to move to the next part
     if st.button("Next Part"):
         st.session_state.current_index = (st.session_state.current_index + 1) % len(lego.index)
-        st.experimental_rerun()
 
     st.write("Updated DataFrame:")
     styled_lego = lego.style.apply(highlight_missing, axis=1)
@@ -103,6 +97,7 @@ if st.session_state.lego is not None:
 
     # Debugging information
     st.write(f"Image Key: {image_key}")
+
 
 
 
