@@ -7,6 +7,7 @@ from PIL import Image
 if 'lego' not in st.session_state:
     st.session_state.lego = None
     st.session_state.current_index = 0
+    st.session_state.selected_index = None
 
 st.title("LEGO Part Image Viewer")
 
@@ -26,6 +27,8 @@ if uploaded_images:
 # Read the uploaded CSV file and store it in session state
 if uploaded_file is not None:
     st.session_state.lego = pd.read_csv(uploaded_file)
+    st.session_state.lego["ElementID"] = st.session_state.lego["ElementID"].astype(str)  # Convert ElementID to string
+    st.session_state.lego.set_index("ElementID", inplace=True)
     st.session_state.current_index = 0  # Reset index when new file is uploaded
 
 if st.session_state.lego is not None:
@@ -35,13 +38,11 @@ if st.session_state.lego is not None:
     def highlight_missing(row):
         return ['background-color: yellow' if row["PiecesPresent"] < row["Qty"] else '' for _ in row]
 
-    # Convert ElementID to string for matching with image names
-    lego["ElementID"] = lego["ElementID"].astype(str)
-    lego.set_index("ElementID", inplace=True)
-
     # Get the current index and selected row
-    current_index = st.session_state.current_index
-    selected_index = lego.index[current_index]
+    if st.session_state.selected_index is None:
+        st.session_state.selected_index = lego.index[st.session_state.current_index]
+    
+    selected_index = st.session_state.selected_index
     selected_row = lego.loc[selected_index]
 
     # Create columns for input fields
@@ -79,15 +80,21 @@ if st.session_state.lego is not None:
     # Button to move to the next part
     if st.button("Next Part"):
         st.session_state.current_index = (st.session_state.current_index + 1) % len(lego.index)
+        st.session_state.selected_index = lego.index[st.session_state.current_index]
+        st.experimental_rerun()
 
     # Button to move to the previous part
     if st.button("Previous Part"):
         st.session_state.current_index = (st.session_state.current_index - 1) % len(lego.index)
+        st.session_state.selected_index = lego.index[st.session_state.current_index]
+        st.experimental_rerun()
 
     # Dropdown to select a specific part number
-    selected_index_from_dropdown = st.selectbox("Jump to Part Number:", options=lego.index, index=current_index)
+    selected_index_from_dropdown = st.selectbox("Jump to Part Number:", options=lego.index, index=st.session_state.current_index)
     if selected_index_from_dropdown != selected_index:
+        st.session_state.selected_index = selected_index_from_dropdown
         st.session_state.current_index = lego.index.get_loc(selected_index_from_dropdown)
+        st.experimental_rerun()
 
     st.write("Updated DataFrame:")
     styled_lego = lego.style.apply(highlight_missing, axis=1)
@@ -106,6 +113,7 @@ if st.session_state.lego is not None:
 
     # Debugging information
     st.write(f"Image Key: {image_key}")
+
 
 
 
